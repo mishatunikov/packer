@@ -14,7 +14,6 @@ class FilePacker:
     zip ил 7z.
     """
     def __init__(self, data: dict) -> None:
-        self.dict_data = data
         self.data = pd.DataFrame(data)
 
     @time_counter
