@@ -1,55 +1,18 @@
-import datetime
 import logging
-import re
 from collections import defaultdict, deque
-from typing import Callable
+
 
 from data_generator import DataGenerator
 from lexicon import CELLS_NAME, LEXICON
-
-
-def check_correct_date(input_date: str) -> bool:
-    '''
-    Проверяет формат введенной даты.
-    '''
-    try:
-        datetime.datetime.strptime(input_date, '%d.%m.%Y')
-        return True
-    except Exception:
-        return False
-
-
-validators: dict[str, Callable] = {
-    'ФИО': lambda fullname:
-        re.fullmatch(r'[А-Яа-я]{2,25} [А-Яа-я]{2,25} [А-Яа-я]{2,25}',
-                     fullname),
-    'Дата рождения': check_correct_date,
-    'Почтовый индекс': lambda index: re.fullmatch(r'[1-9][0-9]{5}',
-                                                  index),
-    'Город': lambda city: re.fullmatch(r'[А-Яа-я]{2,}', city),
-    'Группа здоровья': lambda health_group: re.fullmatch(r'[123]',
-                                                         health_group),
-    'Профессия': lambda profession: re.fullmatch(r'[А-Яа-я]{2,}',
-                                                 profession),
-
-    'Место работы': lambda company: re.fullmatch(r'[А-Яа-я]{3,}',
-                                                 company),
-    'Имя пользователя': lambda username: re.fullmatch(r'@[A-z]{2,}',
-                                                      username),
-    'Электронная почта': lambda email: re.fullmatch(
-        r'[A-Za-z]{2,}@[A-Za-z]{2,}\.[A-Za-z]{2,}', email),
-    'Номер телефона': lambda phone_number: re.fullmatch(r'8[0-9]{10}',
-                                                        phone_number),
-    'archive_selection': lambda archive: re.fullmatch(r'[12]', archive),
-    'validate_exit': lambda user_input: re.fullmatch(r'exit', user_input),
-}
+from packer.constants import SUPPORTED_FORMATS
+from packer.validators import validators, validate_count_data
 
 
 def greetings() -> int:
-    '''
+    """
     Выводит стартовое сообщение для пользователя и
     запрашивает выбор ввода от него.
-    '''
+    """
     print(LEXICON['greetings'])
     while True:
         user_input = input()
@@ -66,18 +29,11 @@ def greetings() -> int:
             continue
 
 
-def validate_count_data(user_input: str) -> bool:
-    '''Проверяет корректность ввода количества генерируемых данных.'''
-    if not re.fullmatch(r'[1-9]\d*', user_input):
-        return False
-    return True
-
-
 def user_manual_entry() -> defaultdict[str, deque]:
-    '''
+    """
     Обрабатывает ручной ввод от пользователя.
     Возвращает словарь, состоящий из введенных данных.
-    '''
+    """
     logging.info('Пользователь выбрал ручной ввод.')
     data: defaultdict[str, deque] = defaultdict(deque)
 
@@ -125,11 +81,11 @@ def user_manual_entry() -> defaultdict[str, deque]:
 
 
 def automatic_generation() -> defaultdict | None:
-    '''
-    Обрабатывает ввод от пользователя необходмый для автоматической генерации
+    """
+    Обрабатывает ввод от пользователя необходимый для автоматической генерации
     данных.
-    Взвращает словарь даннах или None если программа прервана пользователем.
-    '''
+    Возвращает словарь данных или None если программа прервана пользователем.
+    """
     logging.info('Пользователь выбрал автоматическую генерацию.')
     print(LEXICON['automatic_entry'])
 
@@ -155,9 +111,9 @@ def automatic_generation() -> defaultdict | None:
 
 
 def archive_selection() -> int:
-    '''
+    """
     Запрашивает у пользователя тип архива, в который будут упакованы файлы.
-    '''
+    """
     while True:
         user_input = input(LEXICON['archive_selection'])
         if validators['validate_exit'](user_input):
@@ -168,3 +124,23 @@ def archive_selection() -> int:
             continue
 
         return int(user_input)
+
+
+def format_selection():
+    """
+    Запрашивает у пользователя формат данных и возвращает результат выбора.
+    """
+    logging.info('Пользователь выбирает формат данных.')
+    print(LEXICON['format_selection'])
+    while True:
+        user_input = input()
+        if validators['validate_exit'](user_input):
+            return 0
+
+        if not validators['validate_format_selection'](user_input):
+            print(LEXICON['incorrect_input'])
+            continue
+
+        selected_formats = tuple(SUPPORTED_FORMATS[format_number] for format_number in user_input)
+        logging.info(f'Пользователь выбрал форматы: {selected_formats}.')
+        return selected_formats

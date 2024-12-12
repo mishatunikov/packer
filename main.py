@@ -2,9 +2,9 @@ import logging
 
 from lexicon import LEXICON
 from packer import FilePacker
-from timer import time_counter
+from utils import time_counter
 from user_handlers import (archive_selection, automatic_generation, greetings,
-                           user_manual_entry)
+                           user_manual_entry, format_selection)
 
 logging.basicConfig(level=logging.DEBUG,
                     format='#{levelname} {filename} {asctime} - line {lineno}: {message}',
@@ -32,6 +32,12 @@ def main():
         print(LEXICON['exit'])
         return
 
+    file_formats = format_selection()
+
+    if not file_formats:
+        print(LEXICON['exit'])
+        return
+
     archive_type = archive_selection()
 
     if not archive_type:
@@ -40,11 +46,11 @@ def main():
 
     if archive_type == 1:
         logger.info('Формирование архива zip...')
-        FilePacker(data).create_zip()
+        FilePacker(data, file_formats).create_zip()
 
     elif archive_type == 2:
         logger.info('Формирование архива 7z...')
-        FilePacker(data).create_7z()
+        FilePacker(data, file_formats).create_7z()
 
 
 if __name__ == '__main__':
